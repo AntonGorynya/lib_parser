@@ -29,7 +29,7 @@ def check_for_redirect(response):
     if 'text/plain' not in response.headers['Content-Type']:
         raise requests.HTTPError
 
-def validate_name(book_name):
+def serialize_name(book_name):
     return re.sub(r'[^\w\. ]+','', book_name)
 
 
@@ -45,16 +45,18 @@ if __name__ == '__main__':
         if not response.is_redirect:
             soup = BeautifulSoup(response.text, 'lxml')
             book_title, author = [
-                validate_name(x.strip()) for x in soup.find("div", {"id": "content"}).find('h1').text.split('::')
+                serialize_name(x.strip()) for x in soup.find("div", {"id": "content"}).find('h1').text.split('::')
             ]
             book_title = f'{i}. {book_title}.txt'
-            book_img = soup.find("div", {"class": "bookimage"}).find('a').find('img')['src']
+            book_img = soup.find('div', {'class': 'bookimage'}).find('a').find('img')['src']
             book_img = urljoin(SITE, book_img)
-            book_description = soup.find("div", {"id": "content"}).find_all('table')[2].text
+            book_description = soup.find('div', {'id': 'content'}).find_all('table')[2].text
+            book_comments = soup.find_all('div', {'class': 'texts'})
+            print(book_comments)
 
 
-        try:
-            download_txt(text_url, book_title)
-            download_image(book_img)
-        except requests.HTTPError:
-            pass
+        # try:
+        #     download_txt(text_url, book_title)
+        #     download_image(book_img)
+        # except requests.HTTPError:
+        #     pass
