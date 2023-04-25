@@ -32,6 +32,25 @@ def check_for_redirect(response):
 def serialize_name(book_name):
     return re.sub(r'[^\w\. ]+','', book_name)
 
+def parse_book_page(soup):
+    book_title, author = [
+        serialize_name(x.strip()) for x in soup.find("div", {"id": "content"}).find('h1').text.split('::')
+    ]
+    book_title = f'{i}. {book_title}.txt'
+    book_img = soup.find('div', {'class': 'bookimage'}).find('a').find('img')['src']
+    book_img = urljoin(SITE, book_img)
+    book_description = soup.find('div', {'id': 'content'}).find_all('table')[2].text
+    book_comments = soup.find_all('div', {'class': 'texts'})
+    book_genre = soup.find('span', {'class': 'd_book'}).find('a').text
+    return {
+        'author': author,
+        'book_title': book_title,
+        'book_img': book_img,
+        'book_description': book_description,
+        'book_comments': book_comments,
+        'book_genre': book_genre,
+    }
+
 
 
 if __name__ == '__main__':
@@ -44,18 +63,7 @@ if __name__ == '__main__':
         response.raise_for_status()
         if not response.is_redirect:
             soup = BeautifulSoup(response.text, 'lxml')
-            book_title, author = [
-                serialize_name(x.strip()) for x in soup.find("div", {"id": "content"}).find('h1').text.split('::')
-            ]
-            book_title = f'{i}. {book_title}.txt'
-            book_img = soup.find('div', {'class': 'bookimage'}).find('a').find('img')['src']
-            book_img = urljoin(SITE, book_img)
-            book_description = soup.find('div', {'id': 'content'}).find_all('table')[2].text
-            book_comments = soup.find_all('div', {'class': 'texts'})
-            book_genre = soup.find('span', {'class': 'd_book'}).find('a').text
-
-
-
+            parse_book_page(soup)
 
         # try:
         #     download_txt(text_url, book_title)
