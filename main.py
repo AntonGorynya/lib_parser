@@ -52,7 +52,9 @@ if __name__ == '__main__':
             book_img = urljoin(SITE, book_img)
             book_description = soup.find('div', {'id': 'content'}).find_all('table')[2].text
             book_comments = soup.find_all('div', {'class': 'texts'})
-            print(book_comments)
+            book_genre = soup.find('span', {'class': 'd_book'}).find('a').text
+
+
 
 
         # try:
