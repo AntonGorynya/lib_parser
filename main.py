@@ -1,8 +1,10 @@
 from bs4 import BeautifulSoup
+from urllib.parse import urljoin
 import requests
 import os
 import re
 
+SITE = 'https://tululu.org/'
 SOURCE_TEXT = 'https://tululu.org/txt.php?id={id}'
 BOOK_PAGE = 'https://tululu.org/b{id}/'
 
@@ -12,6 +14,14 @@ def download_txt(url, filename, path='books'):
     response = requests.get(url, allow_redirects=False)
     response.raise_for_status()
     check_for_redirect(response)
+    with open(filename, 'wb') as file:
+        file.write(response.content)
+
+def download_image (url, path='books'):
+    _, filename = os.path.split(url)
+    os.makedirs(path, exist_ok=True)
+    response = requests.get(url, allow_redirects=False)
+    response.raise_for_status()
     with open(filename, 'wb') as file:
         file.write(response.content)
 
@@ -39,10 +49,12 @@ if __name__ == '__main__':
             ]
             book_title = f'{i}. {book_title}.txt'
             book_img = soup.find("div", {"class": "bookimage"}).find('a').find('img')['src']
+            book_img = urljoin(SITE, book_img)
             book_description = soup.find("div", {"id": "content"}).find_all('table')[2].text
 
 
         try:
             download_txt(text_url, book_title)
+            download_image(book_img)
         except requests.HTTPError:
             pass
