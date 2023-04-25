@@ -51,9 +51,9 @@ def parse_book_page(soup):
         'author': author,
         'title': book_title,
         'img': book_img,
-        'book_description': book_description,
-        'book_comments': book_comments,
-        'book_genre': book_genre,
+        'description': book_description,
+        'comments': book_comments,
+        'genre': book_genre,
     }
 
 
