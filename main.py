@@ -3,6 +3,7 @@ from urllib.parse import urljoin
 import requests
 import os
 import re
+import argparse
 
 SITE = 'https://tululu.org/'
 SOURCE_TEXT = 'https://tululu.org/txt.php?id={id}'
@@ -51,13 +52,24 @@ def parse_book_page(soup):
         'book_genre': book_genre,
     }
 
+def create_parser():
+    parser = argparse.ArgumentParser(
+        description='download books '
+    )
+    parser.add_argument('--start_id', help='start_id', default=1)
+    parser.add_argument('--end_id', help='end_id', default=11)
+    return parser
+
 
 
 if __name__ == '__main__':
+    parser = create_parser()
+    args = parser.parse_args()
 
-    for i in range(1, 11, 1):
+    for i in range(args.start_id, args.end_id, 1):
         text_url = SOURCE_TEXT.format(id=i)
         book_url = BOOK_PAGE.format(id=i)
+
 
         response = requests.get(book_url, allow_redirects=False)
         response.raise_for_status()
