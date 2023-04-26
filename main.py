@@ -69,8 +69,8 @@ def create_parser():
     parser = argparse.ArgumentParser(
         description='download books '
     )
-    parser.add_argument('--start_id', help='start_id', default=1)
-    parser.add_argument('--end_id', help='end_id', default=11)
+    parser.add_argument('--start_id', help='start_id', default=1, type=int)
+    parser.add_argument('--end_id', help='end_id', default=11, type=int)
     return parser
 
 
