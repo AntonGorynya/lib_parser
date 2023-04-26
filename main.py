@@ -1,13 +1,20 @@
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin
+from requests.models import PreparedRequest
 import requests
 import os
 import re
+import sys
 import argparse
+import time
 
-SITE = 'https://tululu.org/'
-SOURCE_TEXT = 'https://tululu.org/txt.php?id={id}'
-BOOK_PAGE = 'https://tululu.org/b{id}/'
+SITE_URL = 'https://tululu.org/'
+SOURCE_TEXT_URL = 'https://tululu.org/txt.php'
+BOOK_PAGE_URL = 'https://tululu.org/b{id}/'
+
+
+class RedirectError(TypeError):
+    pass
 
 
 def download_txt(url, filename, path='books'):
@@ -19,6 +26,7 @@ def download_txt(url, filename, path='books'):
     with open(filename, 'wb') as file:
         file.write(response.content)
 
+
 def download_image(url, path='books'):
     _, filename = os.path.split(url)
     os.makedirs(path, exist_ok=True)
@@ -29,21 +37,21 @@ def download_image(url, path='books'):
 
 
 def check_for_redirect(response):
-    if 'text/plain' not in response.headers['Content-Type']:
-        raise requests.HTTPError
+    if response.is_redirect:
+        raise RedirectError
 
 
 def serialize_name(book_name):
     return re.sub(r'[^\w\. ]+', '', book_name)
 
 
-def parse_book_page(soup):
+def parse_book_page(soup, book_id):
     book_title, author = [
         serialize_name(x.strip()) for x in soup.find("div", {"id": "content"}).find('h1').text.split('::')
     ]
-    book_title = f'{i}. {book_title}.txt'
+    book_title = f'{book_id}. {book_title}.txt'
     book_img = soup.find('div', {'class': 'bookimage'}).find('a').find('img')['src']
-    book_img = urljoin(SITE, book_img)
+    book_img = urljoin(BOOK_PAGE_URL.format(id=book_id), book_img)
     book_description = soup.find('div', {'id': 'content'}).find_all('table')[2].text
     book_comments = soup.find_all('div', {'class': 'texts'})
     book_genre = soup.find('span', {'class': 'd_book'}).find('a').text
@@ -70,17 +78,24 @@ if __name__ == '__main__':
     parser = create_parser()
     args = parser.parse_args()
 
-    for i in range(args.start_id, args.end_id, 1):
-        text_url = SOURCE_TEXT.format(id=i)
-        book_url = BOOK_PAGE.format(id=i)
-
-        response = requests.get(book_url, allow_redirects=False)
-        response.raise_for_status()
-        if not response.is_redirect:
+    for book_id in range(args.start_id, args.end_id, 1):
+        request = PreparedRequest()
+        request.prepare_url(SOURCE_TEXT_URL, {'id': book_id})
+        text_url = request.url
+        book_url = BOOK_PAGE_URL.format(id=book_id)
+        try:
+            response = requests.get(book_url, allow_redirects=False)
+            response.raise_for_status()
+            check_for_redirect(response)
             soup = BeautifulSoup(response.text, 'lxml')
-            serialize_book = parse_book_page(soup)
-            try:
-                download_txt(text_url, serialize_book['title'])
-                download_image(serialize_book['img'])
-            except requests.HTTPError:
-                pass
+            parsed_book = parse_book_page(soup, book_id)
+            download_txt(text_url, parsed_book['title'])
+            download_image(parsed_book['img'])
+        except requests.HTTPError as error:
+            print(error, file=sys.stderr)
+        except requests.exceptions.ConnectionError as error:
+            print(error, file=sys.stderr)
+            print('Trying to reconnect over 5 seconds...')
+            time.sleep(5)
+        except RedirectError as error:
+            print(f'Redirect error. Book with id {book_id} does not exist', file=sys.stderr)
