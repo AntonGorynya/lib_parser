@@ -96,6 +96,6 @@ if __name__ == '__main__':
         except requests.exceptions.ConnectionError as error:
             print(error, file=sys.stderr)
             print('Trying to reconnect over 5 seconds...')
-            time.sleep(5)
+            time.sleep(10)
         except RedirectError as error:
             print(f'Redirect error. Book with id {book_id} does not exist', file=sys.stderr)
