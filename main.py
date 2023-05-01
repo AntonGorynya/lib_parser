@@ -1,5 +1,5 @@
 from bs4 import BeautifulSoup
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlsplit
 from requests.models import PreparedRequest
 import requests
 import os
@@ -27,13 +27,39 @@ def download_txt(url, filename, path='books'):
         file.write(response.content)
 
 
-def download_image(url, path='books'):
+def download_image(url, path='images'):
     _, filename = os.path.split(url)
     os.makedirs(path, exist_ok=True)
     response = requests.get(url, allow_redirects=False)
     response.raise_for_status()
+    filename = os.path.join(path, filename)
     with open(filename, 'wb') as file:
         file.write(response.content)
+
+
+def download_book(book_url):
+    try:
+        book_id = urlsplit(book_url).path.strip('/')[1:]
+        print('downloading book', book_id)
+        request = PreparedRequest()
+        request.prepare_url(SOURCE_TEXT_URL, {'id': book_id})
+        text_url = request.url
+        response = requests.get(book_url, allow_redirects=False)
+        response.raise_for_status()
+        check_for_redirect(response)
+        soup = BeautifulSoup(response.text, 'lxml')
+        parsed_book = parse_book_page(soup, book_id)
+        download_txt(text_url, parsed_book['title'])
+        download_image(parsed_book['img'])
+        return parsed_book
+    except requests.HTTPError as error:
+        print(error, file=sys.stderr)
+    except requests.exceptions.ConnectionError as error:
+        print(error, file=sys.stderr)
+        print('Trying to reconnect over 5 seconds...')
+        time.sleep(10)
+    except RedirectError as error:
+        print(f'Redirect error. Book with id {book_id} does not exist', file=sys.stderr)
 
 
 def check_for_redirect(response):
@@ -79,23 +105,6 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     for book_id in range(args.start_id, args.end_id, 1):
-        request = PreparedRequest()
-        request.prepare_url(SOURCE_TEXT_URL, {'id': book_id})
-        text_url = request.url
         book_url = BOOK_PAGE_URL.format(id=book_id)
-        try:
-            response = requests.get(book_url, allow_redirects=False)
-            response.raise_for_status()
-            check_for_redirect(response)
-            soup = BeautifulSoup(response.text, 'lxml')
-            parsed_book = parse_book_page(soup, book_id)
-            download_txt(text_url, parsed_book['title'])
-            download_image(parsed_book['img'])
-        except requests.HTTPError as error:
-            print(error, file=sys.stderr)
-        except requests.exceptions.ConnectionError as error:
-            print(error, file=sys.stderr)
-            print('Trying to reconnect over 5 seconds...')
-            time.sleep(10)
-        except RedirectError as error:
-            print(f'Redirect error. Book with id {book_id} does not exist', file=sys.stderr)
+        download_book(book_url)
+
