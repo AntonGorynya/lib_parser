@@ -73,15 +73,15 @@ def serialize_name(book_name):
 
 def parse_book_page(soup, book_id):
     book_title, author = [
-        serialize_name(x.strip()) for x in soup.find("div", {"id": "content"}).find('h1').text.split('::')
+        serialize_name(x.strip()) for x in soup.select_one('#content > h1').text.split('::')
     ]
     book_title = f'{book_id}. {book_title}.txt'
-    book_img = soup.find('div', {'class': 'bookimage'}).find('a').find('img')['src']
+    book_img = soup.select_one('.bookimage  a > img')['src']
     book_img = urljoin(BOOK_PAGE_URL.format(id=book_id), book_img)
-    book_description = soup.find('div', {'id': 'content'}).find_all('table')[2].text
-    book_comments = soup.find_all('div', {'class': 'texts'})
-    book_comments = [comment.find('span').text for comment in book_comments]
-    book_genre = soup.find('span', {'class': 'd_book'}).find('a').text
+    book_description = soup.select('#content table.d_book')[1].text
+    book_comments = soup.select('.texts span')
+    book_comments = [comment.text for comment in book_comments]
+    book_genre = soup.select_one('span.d_book a').text
     return {
         'author': author,
         'title': book_title,
