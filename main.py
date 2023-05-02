@@ -106,13 +106,23 @@ def create_parser():
     )
     parser.add_argument('--start_id', help='First book ID', default=1, type=int)
     parser.add_argument('--end_id', help='Last book ID-1', default=11, type=int)
+    parser.add_argument('--skip_imgs', help='Skip images downloading', default=False, action='store_true')
+    parser.add_argument('--skip_txt', help='Skip book text downloading', default=False, action='store_true')
+    parser.add_argument('--dest_folder', help='Destination folder', default=None)
     return parser
 
 
 if __name__ == '__main__':
     parser = create_parser()
     args = parser.parse_args()
+    if args.dest_folder:
+        os.makedirs(args.dest_folder, exist_ok=True)
 
     for book_id in range(args.start_id, args.end_id, 1):
         book_url = BOOK_PAGE_URL.format(id=book_id)
-        download_book(book_url)
+        downloaded_book = download_book(
+            book_url,
+            skip_imgs=args.skip_imgs,
+            skip_txt=args.skip_txt,
+            dest_folder=args.dest_folder
+        )

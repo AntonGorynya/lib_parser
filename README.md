@@ -23,9 +23,13 @@ pip install -r requirements.txt
 ```
 Ключи для .\main.py
 ```commandline
-  -h, --help           show this help message and exit
-  --start_id START_ID  First book ID
-  --end_id END_ID      Last book ID-1
+  -h, --help                  show this help message and exit
+  --start_id START_ID         First book ID
+  --end_id END_ID             Last book ID-1
+  --skip_imgs                 Skip images downloading
+  --skip_txt                  Skip book text downloading
+  --dest_folder DEST_FOLDER   Destination folder
+
 ```
 Ключи для parse_tululu_category.py
 ```commandline
