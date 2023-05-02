@@ -12,9 +12,14 @@ pip install -r requirements.txt
 
 ### Пример запуска
 
-Ниже представлен пример запуска скрипта.
+Ниже представлен примеры запуска скрипта.
+Для скачивания книг по id подряд воспользуйтесь командой
+```commandline
+> python.exe .\main.py --start_id 5 --end_id 10   
 ```
-lib_parser> python.exe .\main.py
+Для скачиваня книг жанра фантастики воспользуйтесь командой
+```commandline
+> python.exe .\parse_tululu_category.py --start_page 700 --end_page 701 
 ```
 
 ### Цель проекта
