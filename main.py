@@ -80,6 +80,7 @@ def parse_book_page(soup, book_id):
     book_img = urljoin(BOOK_PAGE_URL.format(id=book_id), book_img)
     book_description = soup.find('div', {'id': 'content'}).find_all('table')[2].text
     book_comments = soup.find_all('div', {'class': 'texts'})
+    book_comments = [comment.find('span').text for comment in book_comments]
     book_genre = soup.find('span', {'class': 'd_book'}).find('a').text
     return {
         'author': author,

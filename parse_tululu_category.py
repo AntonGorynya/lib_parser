@@ -4,13 +4,16 @@ from urllib.parse import urljoin
 import time
 import requests
 import sys
+import json
 
 FANTSTIC_BOOK_URL = 'https://tululu.org/l55/{page}'
 
 
 if __name__ == '__main__':
     current_page = 1
-    last_page = 10
+    last_page = 2
+    with open('books.json', 'w', encoding='utf-8') as file:
+        file.write('[\n')
     while current_page <= last_page:
         print('Page:', current_page)
         response = requests.get(FANTSTIC_BOOK_URL.format(page=current_page))
@@ -24,6 +27,11 @@ if __name__ == '__main__':
             book_id = book_path.strip('/')[1:]
             book_url = urljoin(SITE_URL, book_path)
             downloaded_book = download_book(book_url)
+            with open('books.json', 'a', encoding='utf-8') as file:
+                json.dump(downloaded_book, file, ensure_ascii=False, indent=4)
+                file.write(',\n')
         current_page += 1
+    with open('books.json', 'a', encoding='utf-8') as file:
+        file.write('\n]')
 
 
