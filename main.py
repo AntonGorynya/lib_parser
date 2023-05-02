@@ -44,9 +44,8 @@ def download_book(book_url, skip_imgs=False, skip_txt=False, dest_folder=None):
     else:
         img_path = 'images'
         book_path = 'books'
-
+    book_id = urlsplit(book_url).path.strip('/')[1:]
     try:
-        book_id = urlsplit(book_url).path.strip('/')[1:]
         print('downloading book', book_id)
         request = PreparedRequest()
         request.prepare_url(SOURCE_TEXT_URL, {'id': book_id})
@@ -105,8 +104,8 @@ def create_parser():
     parser = argparse.ArgumentParser(
         description='download books '
     )
-    parser.add_argument('--start_id', help='start_id', default=1, type=int)
-    parser.add_argument('--end_id', help='end_id', default=11, type=int)
+    parser.add_argument('--start_id', help='First book ID', default=1, type=int)
+    parser.add_argument('--end_id', help='Last book ID-1', default=11, type=int)
     return parser
 
 
@@ -117,4 +116,3 @@ if __name__ == '__main__':
     for book_id in range(args.start_id, args.end_id, 1):
         book_url = BOOK_PAGE_URL.format(id=book_id)
         download_book(book_url)
-

@@ -22,12 +22,12 @@ def create_parser():
     parser = argparse.ArgumentParser(
         description='download fantastic books '
     )
-    parser.add_argument('--start_page', help='start_page', default=1, type=int)
-    parser.add_argument('--end_page', help='end_page', default=None, type=int)
-    parser.add_argument('--skip_imgs', help='skip_imgs', default=False, action='store_true')
-    parser.add_argument('--skip_txt', help='skip_txt', default=False, action='store_true')
-    parser.add_argument('--json_path', help='json_path', default='books.json')
-    parser.add_argument('--dest_folder', help='dest_folder', default=None)
+    parser.add_argument('--start_page', help='start page number. Default value: 1', default=1, type=int)
+    parser.add_argument('--end_page', help='end page number. Default value: None ', default=None, type=int)
+    parser.add_argument('--skip_imgs', help='Skip images downloading', default=False, action='store_true')
+    parser.add_argument('--skip_txt', help='Skip book text downloading', default=False, action='store_true')
+    parser.add_argument('--json_path', help='Path to json file', default='books.json')
+    parser.add_argument('--dest_folder', help='Destination folder', default=None)
     return parser
 
 
