@@ -4,6 +4,7 @@ from urllib.parse import urljoin
 import requests
 import argparse
 import json
+import os
 
 
 FANTSTIC_BOOK_URL = 'https://tululu.org/l55/{page}'
@@ -23,6 +24,10 @@ def create_parser():
     )
     parser.add_argument('--start_page', help='start_page', default=1, type=int)
     parser.add_argument('--end_page', help='end_page', default=None, type=int)
+    parser.add_argument('--skip_imgs', help='skip_imgs', default=False, action='store_true')
+    parser.add_argument('--skip_txt', help='skip_txt', default=False, action='store_true')
+    parser.add_argument('--json_path', help='json_path', default='books.json')
+    parser.add_argument('--dest_folder', help='dest_folder', default=None)
     return parser
 
 
@@ -34,12 +39,18 @@ if __name__ == '__main__':
     soup = get_soup(current_page)
     last_page = int(soup.select('.npage')[-1]['href'].split('/')[2])
 
+    if args.dest_folder:
+        os.makedirs(args.dest_folder, exist_ok=True)
+    if args.json_path:
+        path, _ = os.path.split(args.json_path)
+        if path:
+            os.makedirs(path, exist_ok=True)
     if args.end_page and args.end_page <= last_page:
         last_page = args.end_page
     else:
         print(f'Change last page to {last_page}')
 
-    with open('books.json', 'w', encoding='utf-8') as file:
+    with open(args.json_path, 'w', encoding='utf-8') as file:
         file.write('[\n')
     while current_page <= last_page:
         print('Page:', current_page)
@@ -48,11 +59,16 @@ if __name__ == '__main__':
             book_path = book_path['href']
             book_id = book_path.strip('/')[1:]
             book_url = urljoin(SITE_URL, book_path)
-            downloaded_book = download_book(book_url)
+            downloaded_book = download_book(
+                book_url,
+                skip_imgs=args.skip_imgs,
+                skip_txt=args.skip_txt,
+                dest_folder=args.dest_folder
+            )
             if downloaded_book:
-                with open('books.json', 'a', encoding='utf-8') as file:
+                with open(args.json_path, 'a', encoding='utf-8') as file:
                     json.dump(downloaded_book, file, ensure_ascii=False, indent=4)
                     file.write(',\n')
         current_page += 1
-    with open('books.json', 'a', encoding='utf-8') as file:
+    with open(args.json_path, 'a', encoding='utf-8') as file:
         file.write('\n]')
