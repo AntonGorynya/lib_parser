@@ -52,34 +52,30 @@ if __name__ == '__main__':
     else:
         print(f'Change last page to {last_page}')
 
-    with open(args.json_path, 'w', encoding='utf-8') as file:
-        file.write('[\n')
+    downloaded_books = []
     while current_page <= last_page:
         print('Page:', current_page)
-        soup = get_soup(current_page)
-        for book_path in soup.select('.bookimage a'):
-            book_path = book_path['href']
-            book_id = book_path.strip('/')[1:]
-            book_url = urljoin(SITE_URL, book_path)
-            try:
+        try:
+            soup = get_soup(current_page)
+            for book_path in soup.select('.bookimage a'):
+                book_path = book_path['href']
+                book_id = book_path.strip('/')[1:]
+                book_url = urljoin(SITE_URL, book_path)
                 downloaded_book = download_book(
                     book_url,
                     skip_imgs=args.skip_imgs,
                     skip_txt=args.skip_txt,
                     dest_folder=args.dest_folder
                 )
-            except requests.HTTPError as error:
-                print(error, file=sys.stderr)
-            except requests.exceptions.ConnectionError as error:
-                print(error, file=sys.stderr)
-                print('Trying to reconnect over 5 seconds...')
-                time.sleep(10)
-            except RedirectError as error:
-                print(f'Redirect error. Book with id {book_id} does not exist', file=sys.stderr)
-            if downloaded_book:
-                with open(args.json_path, 'a', encoding='utf-8') as file:
-                    json.dump(downloaded_book, file, ensure_ascii=False, indent=4)
-                    file.write(',\n')
+                downloaded_books.append(downloaded_book)
+        except requests.HTTPError as error:
+            print(error, file=sys.stderr)
+        except requests.exceptions.ConnectionError as error:
+            print(error, file=sys.stderr)
+            print('Trying to reconnect over 5 seconds...')
+            time.sleep(10)
+        except RedirectError as error:
+            print(f'Redirect error. Book with id {book_id} does not exist', file=sys.stderr)
         current_page += 1
-    with open(args.json_path, 'a', encoding='utf-8') as file:
-        file.write('\n]')
+    with open(args.json_path, 'w', encoding='utf-8') as file:
+        json.dump(downloaded_books, file, ensure_ascii=False, indent=4)
