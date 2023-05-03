@@ -42,29 +42,20 @@ def download_book(book_url, skip_imgs=False, skip_txt=False, dest_folder=None):
         dest_folder = os.getcwd()
 
     book_id = urlsplit(book_url).path.strip('/')[1:]
-    try:
-        print('downloading book', book_id)
-        request = PreparedRequest()
-        request.prepare_url(SOURCE_TEXT_URL, {'id': book_id})
-        text_url = request.url
-        response = requests.get(book_url, allow_redirects=False)
-        response.raise_for_status()
-        check_for_redirect(response)
-        soup = BeautifulSoup(response.text, 'lxml')
-        parsed_book = parse_book_page(soup, book_id)
-        if not skip_txt:
-            download_txt(text_url, parsed_book['title'], path=dest_folder)
-        if not skip_imgs:
-            download_image(parsed_book['img'], path=dest_folder)
-        return parsed_book
-    except requests.HTTPError as error:
-        print(error, file=sys.stderr)
-    except requests.exceptions.ConnectionError as error:
-        print(error, file=sys.stderr)
-        print('Trying to reconnect over 5 seconds...')
-        time.sleep(10)
-    except RedirectError as error:
-        print(f'Redirect error. Book with id {book_id} does not exist', file=sys.stderr)
+    print('downloading book', book_id)
+    request = PreparedRequest()
+    request.prepare_url(SOURCE_TEXT_URL, {'id': book_id})
+    text_url = request.url
+    response = requests.get(book_url, allow_redirects=False)
+    response.raise_for_status()
+    check_for_redirect(response)
+    soup = BeautifulSoup(response.text, 'lxml')
+    parsed_book = parse_book_page(soup, book_id)
+    if not skip_txt:
+        download_txt(text_url, parsed_book['title'], path=dest_folder)
+    if not skip_imgs:
+        download_image(parsed_book['img'], path=dest_folder)
+    return parsed_book
 
 
 def check_for_redirect(response):
@@ -117,9 +108,18 @@ if __name__ == '__main__':
 
     for book_id in range(args.start_id, args.end_id, 1):
         book_url = BOOK_PAGE_URL.format(id=book_id)
-        downloaded_book = download_book(
-            book_url,
-            skip_imgs=args.skip_imgs,
-            skip_txt=args.skip_txt,
-            dest_folder=args.dest_folder
-        )
+        try:
+            downloaded_book = download_book(
+                book_url,
+                skip_imgs=args.skip_imgs,
+                skip_txt=args.skip_txt,
+                dest_folder=args.dest_folder
+            )
+        except requests.HTTPError as error:
+            print(error, file=sys.stderr)
+        except requests.exceptions.ConnectionError as error:
+            print(error, file=sys.stderr)
+            print('Trying to reconnect over 5 seconds...')
+            time.sleep(10)
+        except RedirectError as error:
+            print(f'Redirect error. Book with id {book_id} does not exist', file=sys.stderr)

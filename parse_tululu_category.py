@@ -1,6 +1,8 @@
 from bs4 import BeautifulSoup
-from main import check_for_redirect, SITE_URL, download_book
+from main import check_for_redirect, SITE_URL, download_book, RedirectError
 from urllib.parse import urljoin
+import sys
+import time
 import requests
 import argparse
 import json
@@ -59,12 +61,21 @@ if __name__ == '__main__':
             book_path = book_path['href']
             book_id = book_path.strip('/')[1:]
             book_url = urljoin(SITE_URL, book_path)
-            downloaded_book = download_book(
-                book_url,
-                skip_imgs=args.skip_imgs,
-                skip_txt=args.skip_txt,
-                dest_folder=args.dest_folder
-            )
+            try:
+                downloaded_book = download_book(
+                    book_url,
+                    skip_imgs=args.skip_imgs,
+                    skip_txt=args.skip_txt,
+                    dest_folder=args.dest_folder
+                )
+            except requests.HTTPError as error:
+                print(error, file=sys.stderr)
+            except requests.exceptions.ConnectionError as error:
+                print(error, file=sys.stderr)
+                print('Trying to reconnect over 5 seconds...')
+                time.sleep(10)
+            except RedirectError as error:
+                print(f'Redirect error. Book with id {book_id} does not exist', file=sys.stderr)
             if downloaded_book:
                 with open(args.json_path, 'a', encoding='utf-8') as file:
                     json.dump(downloaded_book, file, ensure_ascii=False, indent=4)
