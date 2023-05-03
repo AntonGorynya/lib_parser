@@ -62,24 +62,29 @@ if __name__ == '__main__':
                 book_path = book_path['href']
                 book_id = book_path.strip('/')[1:]
                 book_url = urljoin(SITE_URL, book_path)
-                downloaded_book = download_book(
-                    book_url,
-                    skip_imgs=args.skip_imgs,
-                    skip_txt=args.skip_txt,
-                    dest_folder=args.dest_folder
-                )
-                downloaded_books.append(downloaded_book)
+                try:
+                    downloaded_book = download_book(
+                        book_url,
+                        skip_imgs=args.skip_imgs,
+                        skip_txt=args.skip_txt,
+                        dest_folder=args.dest_folder
+                    )
+                    downloaded_books.append(downloaded_book)
+                except requests.HTTPError as error:
+                    print(error, file=sys.stderr)
+                except requests.exceptions.ConnectionError as error:
+                    print(error, file=sys.stderr)
+                    print('Trying to reconnect over 5 seconds...')
+                    time.sleep(10)
+                except RedirectError as error:
+                    print(f'Redirect error. Book with id {book_id} does not exist', file=sys.stderr)
         except requests.HTTPError as error:
             print(error, file=sys.stderr)
         except requests.exceptions.ConnectionError as error:
             print(error, file=sys.stderr)
             print('Trying to reconnect over 5 seconds...')
+            current_page -= 1
             time.sleep(10)
-        except RedirectError as error:
-            if book_id:
-                print(f'Redirect error. Book with id {book_id} does not exist', file=sys.stderr)
-            else:
-                print(f'Redirect error. On page {current_page} ', file=sys.stderr)
         current_page += 1
     with open(args.json_path, 'w', encoding='utf-8') as file:
         json.dump(downloaded_books, file, ensure_ascii=False, indent=4)
