@@ -55,6 +55,7 @@ if __name__ == '__main__':
     downloaded_books = []
     while current_page <= last_page:
         print('Page:', current_page)
+        book_id = None
         try:
             soup = get_soup(current_page)
             for book_path in soup.select('.bookimage a'):
@@ -75,7 +76,10 @@ if __name__ == '__main__':
             print('Trying to reconnect over 5 seconds...')
             time.sleep(10)
         except RedirectError as error:
-            print(f'Redirect error. Book with id {book_id} does not exist', file=sys.stderr)
+            if book_id:
+                print(f'Redirect error. Book with id {book_id} does not exist', file=sys.stderr)
+            else:
+                print(f'Redirect error. On page {current_page} ', file=sys.stderr)
         current_page += 1
     with open(args.json_path, 'w', encoding='utf-8') as file:
         json.dump(downloaded_books, file, ensure_ascii=False, indent=4)
