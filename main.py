@@ -38,12 +38,9 @@ def download_image(url, path='images'):
 
 
 def download_book(book_url, skip_imgs=False, skip_txt=False, dest_folder=None):
-    if dest_folder:
-        img_path = os.path.join(dest_folder, 'images')
-        book_path = os.path.join(dest_folder, 'books')
-    else:
-        img_path = 'images'
-        book_path = 'books'
+    if not dest_folder:
+        dest_folder = os.getcwd()
+
     book_id = urlsplit(book_url).path.strip('/')[1:]
     try:
         print('downloading book', book_id)
@@ -56,9 +53,9 @@ def download_book(book_url, skip_imgs=False, skip_txt=False, dest_folder=None):
         soup = BeautifulSoup(response.text, 'lxml')
         parsed_book = parse_book_page(soup, book_id)
         if not skip_txt:
-            download_txt(text_url, parsed_book['title'], path=book_path)
+            download_txt(text_url, parsed_book['title'], path=dest_folder)
         if not skip_imgs:
-            download_image(parsed_book['img'], path=img_path)
+            download_image(parsed_book['img'], path=dest_folder)
         return parsed_book
     except requests.HTTPError as error:
         print(error, file=sys.stderr)
