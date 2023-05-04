@@ -37,12 +37,14 @@ if __name__ == '__main__':
     parser = create_parser()
     args = parser.parse_args()
     current_page = args.start_page
+    dest_folder = os.getcwd()
 
     soup = get_soup(current_page)
     last_page = int(soup.select('.npage')[-1]['href'].split('/')[2])
 
     if args.dest_folder:
         os.makedirs(args.dest_folder, exist_ok=True)
+        dest_folder = args.dest_folder
     if args.json_path:
         path, _ = os.path.split(args.json_path)
         if path:
@@ -65,9 +67,9 @@ if __name__ == '__main__':
                 try:
                     downloaded_book = download_book(
                         book_url,
+                        dest_folder,
                         skip_imgs=args.skip_imgs,
                         skip_txt=args.skip_txt,
-                        dest_folder=args.dest_folder
                     )
                     downloaded_books.append(downloaded_book)
                 except requests.HTTPError as error:

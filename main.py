@@ -37,10 +37,7 @@ def download_image(url, path='images'):
         file.write(response.content)
 
 
-def download_book(book_url, skip_imgs=False, skip_txt=False, dest_folder=None):
-    if not dest_folder:
-        dest_folder = os.getcwd()
-
+def download_book(book_url, dest_folder, skip_imgs=False, skip_txt=False):
     book_id = urlsplit(book_url).path.strip('/')[1:]
     print('downloading book', book_id)
     request = PreparedRequest()
@@ -103,17 +100,20 @@ def create_parser():
 if __name__ == '__main__':
     parser = create_parser()
     args = parser.parse_args()
+    dest_folder = os.getcwd()
     if args.dest_folder:
         os.makedirs(args.dest_folder, exist_ok=True)
+        dest_folder = args.dest_folder
 
     for book_id in range(args.start_id, args.end_id, 1):
         book_url = BOOK_PAGE_URL.format(id=book_id)
+
         try:
             downloaded_book = download_book(
                 book_url,
+                dest_folder,
                 skip_imgs=args.skip_imgs,
                 skip_txt=args.skip_txt,
-                dest_folder=args.dest_folder
             )
         except requests.HTTPError as error:
             print(error, file=sys.stderr)
