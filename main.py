@@ -49,9 +49,14 @@ def download_book(book_url, dest_folder, skip_imgs=False, skip_txt=False):
     soup = BeautifulSoup(response.text, 'lxml')
     parsed_book = parse_book_page(soup, book_id)
     if not skip_txt:
-        download_txt(text_url, parsed_book['title'], path=dest_folder)
+        book_title = parsed_book['title']
+        book_name = f'{book_id}. {book_title}.txt'
+        download_txt(text_url, book_name, path=dest_folder)
+        parsed_book['book_path'] = os.path.join(dest_folder, book_name)
     if not skip_imgs:
         download_image(parsed_book['img'], path=dest_folder)
+        img_name = urlsplit(parsed_book['img']).path.split('/')[-1]
+        parsed_book['img'] = os.path.join(dest_folder, img_name)
     return parsed_book
 
 
@@ -68,7 +73,6 @@ def parse_book_page(soup, book_id):
     book_title, author = [
         serialize_name(x.strip()) for x in soup.select_one('#content > h1').text.split('::')
     ]
-    book_title = f'{book_id}. {book_title}.txt'
     book_img = soup.select_one('.bookimage  a > img')['src']
     book_img = urljoin(BOOK_PAGE_URL.format(id=book_id), book_img)
     book_description = soup.select('#content table.d_book')[1].text
@@ -76,6 +80,7 @@ def parse_book_page(soup, book_id):
     book_comments = [comment.text for comment in book_comments]
     book_genre = soup.select_one('span.d_book a').text
     return {
+        'id': book_id,
         'author': author,
         'title': book_title,
         'img': book_img,
