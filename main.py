@@ -86,7 +86,7 @@ def parse_book_page(soup, book_id):
         'img': book_img,
         'description': book_description,
         'comments': book_comments,
-        'genre': book_genre,
+        'genres': book_genre,
     }
 
 
