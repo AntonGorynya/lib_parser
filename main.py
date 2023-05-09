@@ -78,7 +78,7 @@ def parse_book_page(soup, book_id):
     book_description = soup.select('#content table.d_book')[1].text
     book_comments = soup.select('.texts span')
     book_comments = [comment.text for comment in book_comments]
-    book_genre = soup.select_one('span.d_book a').text
+    book_genre = [genre.text for genre in soup.select('span.d_book a')]
     return {
         'id': book_id,
         'author': author,
